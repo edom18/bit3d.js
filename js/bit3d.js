@@ -69,12 +69,17 @@
             var fl = (this.focus - this.position.z) || 0.00001,
                 x = position.x,
                 y = position.y,
-                z = position.z;
+                z = position.z,
+                pers = fl / (fl - z);
+
+            if (pers < 0) {
+                pers = 1;
+            }
 
             return {
-                x: x * (fl / (fl - z)),
-                y: y * (fl / (fl - z)),
-                z: z * (fl / (fl - z)),
+                x: x * pers,
+                y: y * pers,
+                z: z * pers,
                 w: z
             };
         }
@@ -102,8 +107,40 @@
             return this[name];
         }
     });
+
+    var Bit3dObject = Class.extend({
+        init: function () {}
+    });
+
+    var Line = Bit3dObject.extend({
+        init: function (vertex1, vertex2, opt) {
+            opt || (opt = {});
+            this.vertex1 = vertex1;
+            this.vertex2 = vertex2;
+            this.color = opt.color || '#fff';
+        },
+        draw: function (ctx, camera) {
+            var v1 = camera.applyView(this.vertex1);
+            var v2 = camera.applyView(this.vertex2);
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(v1.x, v1.y);
+            ctx.lineTo(v2.x, v2.y);
+            ctx.closePath();
+            ctx.strokeStyle = this.color;
+            ctx.stroke();
+            ctx.restore();   
+        }
+    });
     
-    var Face = Class.extend({
+    /**
+     * Face class.
+     * @constructor
+     * @param {Array.<Vertex3d>} vertices
+     * @param {Object} opt Option data.
+     */
+    var Face = Bit3dObject.extend({
         init: function (vertices, opt) {
             opt || (opt = {});
             this.vertices = vertices;
@@ -138,7 +175,7 @@
      * @param {number} z z position.
      * @param {Object} opt An option data.
      */
-    var Particle = Vertex3d.extend({
+    var Particle = Bit3dObject.extend({
         init: function (x, y, z, opt) {
             this._super.apply(this, arguments);
             
@@ -201,8 +238,10 @@
         }
     };
 
+    bit3d.Bit3dObject = Bit3dObject;
     bit3d.Camera   = Camera;
     bit3d.Vertex3d = Vertex3d;
+    bit3d.Line     = Line;
     bit3d.Face     = Face;
     bit3d.Particle = Particle;
     exports.bit3d  = bit3d;

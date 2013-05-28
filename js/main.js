@@ -35,6 +35,8 @@
         ]
     ];
 
+    var line1, line2;
+
     function init() {
         cv  = doc.getElementById('cv');
         ctx = cv.getContext('2d');
@@ -50,6 +52,17 @@
             var face = new bit3d.Face([v1, v2, v3, v4]);
             facies.push(face);
         }
+
+        line1 = new bit3d.Line(
+            new bit3d.Vertex3d([0, -h / 2, 0]),
+            new bit3d.Vertex3d([0, h / 2, 0])
+        );
+
+        line2 = new bit3d.Line(
+            new bit3d.Vertex3d([-w / 2, 0, 0]),
+            new bit3d.Vertex3d([w / 2, 0, 0])
+        );
+
 
         setEvents();
         draw();
@@ -67,7 +80,8 @@
         for (var i = 0, l = facies.length; i < l; i++) {
             facies[i].draw(ctx, camera);
         }
-
+        line1.draw(ctx, camera);
+        line2.draw(ctx, camera);
         ctx.restore();   
     }
 
