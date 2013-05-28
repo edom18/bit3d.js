@@ -4,42 +4,73 @@
     var ctx = null;
     var w = 0;
     var h = 0;
-    var point = null;
-    var particles = [];
-    var particleNum = 300;
     var camera = new bit3d.Camera();
     var random = Math.random;
+    var facies = [];
+
+    var face_pos = [
+        [
+            [-50, -50, 10],
+            [ 50, -50, 10],
+            [ 50,  50, 10],
+            [-50,  50, 10]
+        ],
+        [
+            [-150, -150, 10],
+            [ -50, -150, 10],
+            [ -50,  -50, 10],
+            [-150,  -50, 10]
+        ],
+        [
+            [-50, -50, 100],
+            [ 50, -50, 100],
+            [ 50,  50, 100],
+            [-50,  50, 100]
+        ],
+        [
+            [ 50,  50, -100],
+            [100,  50, 10],
+            [100, 100, 10],
+            [ 50, 100, -100]
+        ]
+    ];
 
     function init() {
-        
         cv  = doc.getElementById('cv');
         ctx = cv.getContext('2d');
         w = cv.width = win.innerWidth;
         h = cv.height = win.innerHeight;
-        
-        for (var i = 0; i < particleNum; i++) {
-            var size = ~~(random() * 10) + 5;
-            var x = ~~(random() * w) - w / 2;
-            var y = ~~(random() * h) - h / 2;
-            var z = ~~(random() * 1000);
-            var sp = ~~(random() * 2);
-            var r = ~~(random() * 255);
-            var g = ~~(random() * 255);
-            var b = ~~(random() * 255);
-            var color = 'rgb(' + r + ', ' + g + ', ' + b + ')';
-            var p = new bit3d.Particle(x, y, z, {
-                size: size,
-                sp: sp,
-                color: color
-            });
-            particles.push(p);
-        }
-        
-        setEvents();
 
-        loop();
+        for (var i = 0, l = face_pos.length; i < l; i++) {
+            var pos = face_pos[i];
+            var v1 = new bit3d.Vertex3d(pos[0]);
+            var v2 = new bit3d.Vertex3d(pos[1]);
+            var v3 = new bit3d.Vertex3d(pos[2]);
+            var v4 = new bit3d.Vertex3d(pos[3]);
+            var face = new bit3d.Face([v1, v2, v3, v4]);
+            facies.push(face);
+        }
+
+        setEvents();
+        draw();
     }
-    
+
+    function draw() {
+        ctx.save();
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(30, 30, 30, 0.5)';
+        ctx.fillRect(0, 0, w, h);
+
+        //Set center view port.
+        ctx.translate(w / 2, h / 2);
+
+        for (var i = 0, l = facies.length; i < l; i++) {
+            facies[i].draw(ctx, camera);
+        }
+
+        ctx.restore();   
+    }
+
     function setEvents() {
     
         var isTouch = 'ontouchstart' in window;
@@ -58,6 +89,7 @@
             e.preventDefault();
             return false;
         });
+
         doc.addEventListener(M_MOVE, function (e) {
 
             if (!dragging) {
@@ -67,51 +99,18 @@
             var x = (isTouch ? e.touches[0].pageX : e.pageX) - prevX;
             var y = (isTouch ? e.touches[0].pageY : e.pageY) - prevY;
 
-            camera.rotate.x -= x;
-            camera.rotate.y -= y;
+            camera.rotate.x += y;
+            camera.rotate.y -= x;
 
             prevX = e.pageX;
             prevY = e.pageY;
+
+            draw();
         }, false);
 
         doc.addEventListener(M_UP, function (e) {
             dragging = false;
         }, false);   
-    }
-    
-    function drawAxis() {
-        ctx.save();
-        ctx.beginPath();
-        ctx.strokeStyle = '#333';
-        ctx.moveTo(0, cv.height / 2);
-        ctx.lineTo(cv.width, cv.height / 2);
-        ctx.moveTo(cv.width / 2, 0);
-        ctx.lineTo(cv.width / 2, cv.height);
-        ctx.stroke();
-        ctx.closePath();
-        ctx.restore();
-    }
-    
-    function loop() {
-        //camera.rotate.x += 1;
-        ctx.save();
-        ctx.beginPath();
-        ctx.fillStyle = 'rgba(30, 30, 30, 0.5)';
-        ctx.fillRect(0, 0, w, h);
-
-        //drawAxis();
-
-        //Set center view port.
-        ctx.translate(w / 2, h / 2);
-        
-        for (var i = 0, l = particles.length; i < l; i++) {
-            var p = particles[i];
-            p.update();
-            p.draw(ctx, camera);
-        }
-        
-        ctx.restore();
-        setTimeout(loop, 16);
     }
 
     doc.addEventListener('DOMContentLoaded', init, false);

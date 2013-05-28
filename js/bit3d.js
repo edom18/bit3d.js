@@ -22,22 +22,13 @@
      */
     var Camera = Class.extend({
         focus: 300,
-        init: function () {
-            this.position = {
-                x: 0,
-                y: 0,
-                z: 0
-            };
-            this.rotate = {
-                x: 0,
-                y: 0,
-                z: 0
-            };
-            this.up = {
-                x: 0,
-                y: 1,
-                z: 0
-            };
+        init: function (attr) {
+            attr || (attr = {});
+
+            this.position = { x: 0, y: 0, z: 0 };
+            this.rotate   = { x: 0, y: 0, z: 0 };
+            this.up       = { x: 0, y: 1, z: 0 };
+            this.focus    = attr.focus || this.focus;
         },
         applyView: function (target) {
             var ret = target;
@@ -99,10 +90,10 @@
      * @param {number} z
      */
     var Vertex3d = Class.extend({
-        init: function (x, y, z) {
-            this.x = x || 0;
-            this.y = y || 0;
-            this.z = z || 0;
+        init: function (vector) {
+            this.x = vector[0] || 0;
+            this.y = vector[1] || 0;
+            this.z = vector[2] || 0;
         },
         setAttribute: function (name, val) {
             this[name] = val;
@@ -112,6 +103,31 @@
         }
     });
     
+    var Face = Class.extend({
+        init: function (vertices, opt) {
+            opt || (opt = {});
+            this.vertices = vertices;
+            this.color    = opt.color || '#ccc';
+            this.strokeColor = opt.strokeColor || '#999';
+        },
+        draw: function (ctx, camera) {
+            var vertices = this.vertices;
+
+            ctx.save();
+            ctx.beginPath();
+            for (var i = 0, l = vertices.length; i < l; i++) {
+                var v = vertices[i];
+                v = camera.applyView(v);
+                (i === 0) ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.strokeStyle = this.strokeColor;
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();   
+        }
+    });
 
     /**
      * Particle class
@@ -187,6 +203,7 @@
 
     bit3d.Camera   = Camera;
     bit3d.Vertex3d = Vertex3d;
+    bit3d.Face     = Face;
     bit3d.Particle = Particle;
     exports.bit3d  = bit3d;
     
