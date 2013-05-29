@@ -70,10 +70,10 @@
                 x = position.x,
                 y = position.y,
                 z = position.z,
-                pers = fl / (fl - z);
+                pers = fl / ((fl - z) || 0.00001);
 
-            if (pers < 0) {
-                pers = 1;
+            if (fl - z < 0) {
+                pers *= -1;
             }
 
             return {
@@ -114,6 +114,7 @@
 
     var Line = Bit3dObject.extend({
         init: function (vertex1, vertex2, opt) {
+            this._super();
             opt || (opt = {});
             this.vertex1 = vertex1;
             this.vertex2 = vertex2;
@@ -142,6 +143,7 @@
      */
     var Face = Bit3dObject.extend({
         init: function (vertices, opt) {
+            this._super();
             opt || (opt = {});
             this.vertices = vertices;
             this.color    = opt.color || '#ccc';
@@ -176,23 +178,24 @@
      * @param {Object} opt An option data.
      */
     var Particle = Bit3dObject.extend({
-        init: function (x, y, z, opt) {
-            this._super.apply(this, arguments);
+        init: function (vertex, opt) {
+            this._super();
             
             opt || (opt = {});
             
-            this.size = opt.size || 5;
-            this.sp   = opt.sp || 5;
-            this.color = opt.color || 'red';
+            this.vertex = vertex;
+            this.size   = opt.size || 5;
+            this.sp     = opt.sp || 5;
+            this.color  = opt.color || 'red';
         },
         update: function () {
-            var temp = affine.rotate.y(this.sp / 10 * PI / 180, this);
-            this.x = temp.x;
-            this.y = temp.y;
-            this.z = temp.z;
+            var temp = affine.rotate.y(this.sp / 10 * PI / 180, this.vertex);
+            this.vertex.x = temp.x;
+            this.vertex.y = temp.y;
+            this.vertex.z = temp.z;
         },
         draw: function (ctx, camera) {
-            var m = camera.applyView(this);
+            var m = camera.applyView(this.vertex);
             m.r = this.size;
             
             var d = abs(m.z / m.w);
