@@ -178,31 +178,26 @@
      * @param {Object} opt An option data.
      */
     var Particle = Bit3dObject.extend({
+        defaults: {
+            color: '#000',
+            size: 5
+        },
         init: function (vertex, opt) {
             this._super();
             
             opt || (opt = {});
             
             this.vertex = vertex;
-            this.size   = opt.size || 5;
-            this.sp     = opt.sp || 5;
-            this.color  = opt.color || 'red';
-        },
-        update: function () {
-            var temp = affine.rotate.y(this.sp / 10 * PI / 180, this.vertex);
-            this.vertex.x = temp.x;
-            this.vertex.y = temp.y;
-            this.vertex.z = temp.z;
+            this.size   = opt.size || this.defaults.size;
+            this.color  = opt.color || this.defaults.color;
         },
         draw: function (ctx, camera) {
             var m = camera.applyView(this.vertex);
-            m.r = this.size;
-            
-            var d = abs(m.z / m.w);
+            var d = (m.w === 0) ? 1 : abs(m.z / m.w);
     
             ctx.save();
             ctx.beginPath();
-            ctx.arc(m.x, m.y, m.r * d, 0, PI * 2, false);
+            ctx.arc(m.x, m.y, this.size * d, 0, PI * 2, false);
             ctx.fillStyle = this.color;
             ctx.globalAlpha = d;
             ctx.fill();
@@ -210,6 +205,63 @@
             ctx.restore();   
         }
     });
+
+    /**
+     * Color Particle class
+     * @constructor
+     * @extend Vertex3d
+     * @param {number} x x position.
+     * @param {number} y y position.
+     * @param {number} z z position.
+     * @param {Object} opt An option data.
+     */
+    var ColorParticle = Particle.extend({
+        init: function (vertex, opt) {
+            this._super.apply(this, arguments);
+        }
+    });
+
+    /**
+     * Gradient Particle class
+     * @constructor
+     * @extend Vertex3d
+     * @param {number} x x position.
+     * @param {number} y y position.
+     * @param {number} z z position.
+     * @param {Object} opt An option data.
+     */
+    var GradientParticle = Particle.extend({
+        defaults: {
+            size: 5,
+            color: 'rgba(255, 255, 255, 0.5)',
+            end_color: 'rgba(200, 200, 255, 0)'
+        },
+        init: function (vertex, opt) {
+            this._super.apply(this, arguments);
+            this.end_color = opt.end_color || this.defaults.end_color;
+        },
+
+        /** @override */
+        draw: function (ctx, camera) {
+            var m = camera.applyView(this.vertex);
+            var d = (m.w === 0) ? 1 : abs(m.z / m.w);
+            var grad = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, this.size);
+
+            grad.addColorStop(0, this.color);
+            grad.addColorStop(1, this.end_color);
+    
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(m.x, m.y, this.size * d, 0, PI * 2, false);
+            ctx.fillStyle = grad;
+            ctx.globalAlpha = d;
+            ctx.fill();
+            ctx.closePath();
+            ctx.restore();   
+        }
+    });
+
+
 
     
     /**
@@ -241,12 +293,15 @@
         }
     };
 
-    bit3d.Bit3dObject = Bit3dObject;
-    bit3d.Camera   = Camera;
-    bit3d.Vertex3d = Vertex3d;
-    bit3d.Line     = Line;
-    bit3d.Face     = Face;
-    bit3d.Particle = Particle;
+    bit3d.Bit3dObject   = Bit3dObject;
+    bit3d.Camera        = Camera;
+    bit3d.Vertex3d      = Vertex3d;
+    bit3d.Line          = Line;
+    bit3d.Face          = Face;
+    bit3d.Particle      = Particle;
+    bit3d.ColorParticle = ColorParticle;
+    bit3d.GradientParticle = GradientParticle;
+
     exports.bit3d  = bit3d;
     
 }(window, window.document, window.Class, window));
